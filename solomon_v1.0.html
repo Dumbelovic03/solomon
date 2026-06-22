@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solomon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #0C1310;
+  --bg2:     #101810;
+  --bg3:     #141F15;
+  --surf:    #192319;
+  --surf2:   #1E2B1E;
+  --bdr:     #263326;
+  --bdr2:    #2F402F;
+  --g:       #3DD68C;
+  --g2:      #29BF78;
+  --g3:      #1D8F58;
+  --gdim:    #4A7A5A;
+  --gfaint:  #1A3325;
+  --amb:     #F0B429;
+  --ambdim:  #7A5C10;
+  --ambfaint:#2A1E08;
+  --red:     #F06060;
+  --redfaint:#2A1010;
+  --txt:     #C8E6CC;
+  --txt2:    #7FA882;
+  --txt3:    #3D6040;
+  --mono:    'JetBrains Mono', monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--bg);
+  color:var(--txt);
+  font-family:var(--mono);
+  font-size:13px;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+/* ===== OVERLAY ===== */
+#overlay{
+  position:fixed;inset:0;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  z-index:200;
+}
+.picker{max-width:420px;width:100%;padding:2rem 1.5rem;text-align:center}
+.picker-brand{
+  font-size:0.7rem;letter-spacing:0.25em;color:var(--g);
+  text-transform:uppercase;margin-bottom:0.4rem;
+}
+.picker-title{
+  font-size:1.6rem;font-weight:300;color:var(--txt);
+  margin-bottom:0.35rem;letter-spacing:-0.02em;
+}
+.picker-sub{font-size:0.75rem;color:var(--txt3);margin-bottom:2rem}
+.split-opts{display:flex;flex-direction:column;gap:0.55rem}
+.sopt{
+  background:var(--surf);
+  border:1px solid var(--bdr);
+  border-radius:10px;
+  padding:1rem 1.1rem;
+  cursor:pointer;
+  display:flex;justify-content:space-between;align-items:center;
+  transition:border-color 0.15s,background 0.15s;
+  text-align:left;
+}
+.sopt:hover{border-color:var(--g3);background:var(--surf2)}
+.sopt-num{font-size:1.25rem;font-weight:500;color:var(--g)}
+.sopt-desc{font-size:0.68rem;color:var(--txt3);margin-top:0.2rem}
+.sopt-tag{
+  font-size:0.62rem;color:var(--txt3);
+  border:1px solid var(--bdr);
+  padding:0.18rem 0.45rem;border-radius:4px;
+  white-space:nowrap;
+}
+
+/* ===== SHELL ===== */
+#shell{display:none;width:100%;max-width:520px;padding:0 1rem 3rem}
+
+/* ===== TOP BAR ===== */
+.topbar{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:1.25rem 0 0;margin-bottom:1.2rem;
+}
+.brand{
+  font-size:0.75rem;font-weight:600;
+  letter-spacing:0.22em;color:var(--g);text-transform:uppercase;
+}
+.split-chip{
+  font-size:0.65rem;color:var(--txt3);
+  border:1px solid var(--bdr);border-radius:5px;
+  padding:0.22rem 0.55rem;cursor:pointer;
+  transition:color 0.15s,border-color 0.15s;
+}
+.split-chip:hover{color:var(--txt2);border-color:var(--g3)}
+
+/* ===== TABS ===== */
+.tabs{
+  display:flex;gap:0;
+  border:1px solid var(--bdr);border-radius:8px;
+  overflow:hidden;margin-bottom:1.5rem;
+}
+.tab{
+  flex:1;padding:0.55rem;
+  font-family:var(--mono);font-size:0.7rem;
+  letter-spacing:0.1em;text-transform:uppercase;
+  background:none;border:none;cursor:pointer;
+  color:var(--txt3);transition:all 0.15s;
+}
+.tab.active{background:var(--surf2);color:var(--g)}
+.tab:not(:last-child){border-right:1px solid var(--bdr)}
+
+/* ===== TIMER TAB ===== */
+#tab-timer{}
+
+.phase-pill{
+  display:inline-block;
+  font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;
+  padding:0.28rem 0.75rem;border-radius:20px;
+  margin-bottom:1.4rem;
+  transition:all 0.35s;
+}
+.phase-pill.idle    {background:var(--surf);color:var(--txt3);border:1px solid var(--bdr)}
+.phase-pill.session {background:var(--gfaint);color:var(--g);border:1px solid var(--g3)}
+.phase-pill.brk     {background:var(--ambfaint);color:var(--amb);border:1px solid var(--ambdim)}
+.phase-pill.overtime{background:var(--redfaint);color:var(--red);border:1px solid #5A2020}
+
+.ring-center{display:flex;flex-direction:column;align-items:center;margin-bottom:1.5rem}
+
+/* SVG ring */
+.rsvg{overflow:visible}
+.ring-track{fill:none;stroke:var(--surf2);stroke-width:7}
+.ring-fill{
+  fill:none;stroke-width:7;stroke-linecap:round;
+  transition:stroke-dashoffset 1s linear,stroke 0.35s;
+}
+.timer-inner{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.t-wrap{position:relative;width:210px;height:210px}
+.t-num{
+  font-size:2.75rem;font-weight:300;letter-spacing:-0.03em;
+  transition:color 0.35s;line-height:1;
+}
+.t-round{font-size:0.6rem;color:var(--txt3);margin-top:0.4rem;letter-spacing:0.1em}
+
+/* controls */
+.ctrls{display:flex;align-items:center;justify-content:center;gap:0.75rem}
+.cbtn{
+  background:none;border:1px solid var(--bdr);border-radius:8px;
+  padding:0.55rem 0.75rem;cursor:pointer;color:var(--txt2);
+  font-size:1rem;transition:all 0.15s;
+  display:flex;align-items:center;
+}
+.cbtn:hover{border-color:var(--g3);color:var(--txt)}
+.cbtn:disabled{opacity:0.25;cursor:not-allowed}
+.mbtn{
+  font-family:var(--mono);font-size:0.72rem;font-weight:600;
+  letter-spacing:0.1em;text-transform:uppercase;
+  padding:0.75rem 2rem;border:none;border-radius:9px;
+  cursor:pointer;min-width:110px;transition:all 0.15s;
+}
+.mbtn.go   {background:var(--g);color:var(--bg)}
+.mbtn.go:hover{background:var(--g2)}
+.mbtn.pause{background:var(--surf2);color:var(--txt);border:1px solid var(--bdr)}
+.mbtn.pause:hover{border-color:var(--g3)}
+.mbtn.brk  {background:var(--ambfaint);color:var(--amb);border:1px solid var(--ambdim)}
+
+/* today quick stats */
+.today-row{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  gap:0.5rem;margin-top:1.5rem;
+  border-top:1px solid var(--bdr);padding-top:1.25rem;
+}
+.tstat{background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:0.75rem 0.8rem}
+.tstat-lbl{font-size:0.6rem;color:var(--txt3);margin-bottom:0.3rem}
+.tstat-val{font-size:1rem;font-weight:500}
+.tstat-val.g{color:var(--g)}
+.tstat-val.a{color:var(--amb)}
+.tstat-val.d{color:var(--txt2)}
+
+/* ===== STATS TAB ===== */
+#tab-stats{display:none}
+
+.stats-range{
+  display:flex;gap:0;border:1px solid var(--bdr);
+  border-radius:7px;overflow:hidden;margin-bottom:1.25rem;
+}
+.rbtn{
+  flex:1;font-family:var(--mono);font-size:0.65rem;
+  letter-spacing:0.1em;text-transform:uppercase;
+  background:none;border:none;cursor:pointer;
+  padding:0.5rem;color:var(--txt3);transition:all 0.15s;
+}
+.rbtn.active{background:var(--surf2);color:var(--g)}
+.rbtn:not(:last-child){border-right:1px solid var(--bdr)}
+
+.stats-cards{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem}
+.sc{background:var(--surf);border:1px solid var(--bdr);border-radius:9px;padding:0.85rem 0.9rem}
+.sc-lbl{font-size:0.62rem;color:var(--txt3);margin-bottom:0.35rem}
+.sc-val{font-size:1.2rem;font-weight:500}
+.sc-val.g{color:var(--g)}
+.sc-val.a{color:var(--amb)}
+.sc-sub{font-size:0.6rem;color:var(--txt3);margin-top:0.15rem}
+
+/* chart */
+.chart-wrap{
+  background:var(--surf);border:1px solid var(--bdr);
+  border-radius:9px;padding:0.9rem;margin-bottom:0.75rem;
+}
+.chart-lbl{font-size:0.62rem;color:var(--txt3);margin-bottom:0.75rem}
+.chart-area{display:flex;align-items:flex-end;gap:3px;height:60px}
+.bc{flex:1;display:flex;flex-direction:column;align-items:center;gap:0;height:100%;justify-content:flex-end}
+.b{width:100%;border-radius:3px 3px 0 0;min-height:2px;transition:height 0.5s ease}
+.b.s{background:var(--g3)}
+.b.r{background:var(--ambdim)}
+.bl{font-size:0.5rem;color:var(--txt3);margin-top:3px;text-align:center}
+.bl.today{color:var(--g)}
+
+/* streak / monthly heatmap */
+.section-hdr{
+  font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--txt3);margin:1rem 0 0.6rem;
+}
+.heatmap{
+  background:var(--surf);border:1px solid var(--bdr);
+  border-radius:9px;padding:0.9rem;
+}
+.hmap-month-nav{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:0.6rem;
+}
+.hmap-nav-btn{
+  background:none;border:none;cursor:pointer;
+  color:var(--txt3);font-family:var(--mono);font-size:0.8rem;
+  padding:0.2rem 0.4rem;transition:color 0.15s;
+}
+.hmap-nav-btn:hover{color:var(--txt)}
+.hmap-month-title{font-size:0.7rem;color:var(--txt2);letter-spacing:0.08em}
+.dow-row{
+  display:grid;grid-template-columns:repeat(7,1fr);
+  gap:2px;margin-bottom:4px;
+}
+.dow-lbl{font-size:0.48rem;color:var(--txt3);text-align:center;padding-bottom:2px}
+.hmap-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.hcell{
+  aspect-ratio:1;border-radius:3px;
+  background:var(--bdr);
+  transition:background 0.2s;
+  cursor:default;
+  position:relative;
+}
+.hcell.empty{background:transparent}
+.hcell.today-cell{outline:1px solid var(--g);outline-offset:1px}
+
+/* legend */
+.hmap-legend{display:flex;align-items:center;gap:4px;margin-top:0.5rem;justify-content:flex-end}
+.hl{width:10px;height:10px;border-radius:2px}
+.hl-lbl{font-size:0.5rem;color:var(--txt3)}
+
+/* tooltip */
+.tooltip{
+  position:fixed;
+  background:var(--surf2);border:1px solid var(--bdr2);
+  border-radius:6px;padding:0.4rem 0.6rem;
+  font-size:0.62rem;color:var(--txt);
+  pointer-events:none;z-index:300;
+  opacity:0;transition:opacity 0.1s;
+  white-space:nowrap;
+}
+.tooltip.vis{opacity:1}
+
+/* notif */
+.notif{
+  position:fixed;bottom:1.25rem;right:1.25rem;
+  background:var(--surf2);border:1px solid var(--g3);
+  border-radius:10px;padding:0.75rem 1rem;
+  font-size:0.72rem;color:var(--txt);
+  transform:translateX(130%);transition:transform 0.3s ease;
+  z-index:400;max-width:240px;
+}
+.notif.show{transform:translateX(0)}
+.notif-title{font-weight:600;color:var(--g);margin-bottom:0.15rem;font-size:0.68rem}
+</style>
+</head>
+<body>
+
+<!-- SPLIT OVERLAY -->
+<div id="overlay">
+  <div class="picker">
+    <div class="picker-brand">Solomon</div>
+    <div class="picker-title">Choose your split</div>
+    <div class="picker-sub">Select the work/break ratio for today's session</div>
+    <div class="split-opts">
+      <button class="sopt" onclick="selectSplit(25,5,'25 / 5')">
+        <div><div class="sopt-num">25 / 5</div><div class="sopt-desc">Classic Pomodoro — short bursts, frequent breaks</div></div>
+        <div class="sopt-tag">Pomodoro</div>
+      </button>
+      <button class="sopt" onclick="selectSplit(50,10,'50 / 10')">
+        <div><div class="sopt-num">50 / 10</div><div class="sopt-desc">Extended focus — for sustained deep work</div></div>
+        <div class="sopt-tag">Deep Work</div>
+      </button>
+      <button class="sopt" onclick="selectSplit(90,30,'90 / 30')">
+        <div><div class="sopt-num">90 / 30</div><div class="sopt-desc">Ultradian rhythm — maximum cognitive output</div></div>
+        <div class="sopt-tag">Ultradian</div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN SHELL -->
+<div id="shell">
+  <div class="topbar">
+    <div class="brand">Solomon</div>
+    <div class="split-chip" id="chipLabel" onclick="changeSplit()">— change split</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('timer')">Timer</button>
+    <button class="tab" onclick="showTab('stats')">Stats</button>
+  </div>
+
+  <!-- TIMER -->
+  <div id="tab-timer">
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div class="phase-pill idle" id="phasePill">Idle</div>
+
+      <div class="t-wrap">
+        <svg class="rsvg" width="210" height="210" viewBox="0 0 210 210" style="position:absolute;inset:0;transform:rotate(-90deg)">
+          <circle class="ring-track" cx="105" cy="105" r="92"/>
+          <circle class="ring-fill" id="ringFg" cx="105" cy="105" r="92"
+            stroke-dasharray="578.05" stroke-dashoffset="578.05" stroke="var(--g)"/>
+        </svg>
+        <div class="timer-inner">
+          <div class="t-num" id="tNum" style="color:var(--txt3)">--:--</div>
+          <div class="t-round" id="tRound">round —</div>
+        </div>
+      </div>
+
+      <div class="ctrls" style="margin-top:1.5rem">
+        <button class="cbtn" id="btnPrev" onclick="prevRound()" disabled title="Previous round">&#8592;</button>
+        <button class="mbtn go" id="mainBtn" onclick="handleMain()">Start</button>
+        <button class="cbtn" id="btnSkip" onclick="skipPhase()" disabled title="Skip phase">&#8594;</button>
+      </div>
+    </div>
+
+    <div class="today-row" id="todayRow">
+      <div class="tstat"><div class="tstat-lbl">Study</div><div class="tstat-val g" id="tsStudy">0h 00m</div></div>
+      <div class="tstat"><div class="tstat-lbl">Rest</div><div class="tstat-val a" id="tsRest">0h 00m</div></div>
+      <div class="tstat"><div class="tstat-lbl">Rounds</div><div class="tstat-val d" id="tsRounds">0</div></div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div id="tab-stats">
+    <div class="stats-range">
+      <button class="rbtn active" onclick="setRange('day')">Day</button>
+      <button class="rbtn" onclick="setRange('week')">Week</button>
+      <button class="rbtn" onclick="setRange('month')">Month</button>
+    </div>
+
+    <div class="stats-cards" id="statsCards"></div>
+
+    <div class="chart-wrap" id="chartWrap">
+      <div class="chart-lbl" id="chartLbl">This week (min)</div>
+      <div class="chart-area" id="chartArea"></div>
+    </div>
+
+    <div class="section-hdr">Monthly heatmap</div>
+    <div class="heatmap">
+      <div class="hmap-month-nav">
+        <button class="hmap-nav-btn" onclick="shiftMonth(-1)">&#8592;</button>
+        <div class="hmap-month-title" id="hmapMonthTitle"></div>
+        <button class="hmap-nav-btn" onclick="shiftMonth(1)">&#8594;</button>
+      </div>
+      <div class="dow-row" id="dowRow"></div>
+      <div class="hmap-grid" id="hmapGrid"></div>
+      <div class="hmap-legend">
+        <div class="hl" style="background:var(--bdr)"></div><div class="hl-lbl">0</div>
+        <div class="hl" style="background:#1A4A2E"></div><div class="hl-lbl">1h</div>
+        <div class="hl" style="background:#1D8F58"></div><div class="hl-lbl">3h</div>
+        <div class="hl" style="background:#3DD68C"></div><div class="hl-lbl">5h+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+<div class="notif" id="notif"><div class="notif-title" id="notifT"></div><div id="notifM"></div></div>
+
+<script>
+const CIRC = 578.05;
+const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+let split = null;
+let phase = 'idle';
+let running = false;
+let remaining = 0, elapsed = 0, phaseDuration = 0;
+let round = 0;
+let tick = null;
+let overtimeSec = 0;
+let accumStudy = 0, accumRest = 0, accumOT = 0;
+let statsRange = 'week';
+let hmapMonthOffset = 0;
+
+// ---- storage ----
+function dayKey(offset=0){
+  const d=new Date(); d.setDate(d.getDate()-offset);
+  return 'sol_'+d.toISOString().slice(0,10);
+}
+function dateKey(date){ return 'sol_'+date.toISOString().slice(0,10); }
+function loadDay(k){ try{return JSON.parse(localStorage.getItem(k))||{study:0,rest:0,overtime:0,rounds:0,sessions:0};}catch{return{study:0,rest:0,overtime:0,rounds:0,sessions:0};} }
+function saveDay(k,d){ localStorage.setItem(k,JSON.stringify(d)); }
+function flushAccum(){
+  if(!accumStudy&&!accumRest&&!accumOT) return;
+  const k=dayKey();const d=loadDay(k);
+  d.study+=accumStudy; d.rest+=accumRest; d.overtime+=accumOT;
+  accumStudy=accumRest=accumOT=0;
+  saveDay(k,d); refreshTodayQuick(); if(statsRange) renderStats();
+}
+
+// ---- split ----
+function selectSplit(w,b,lbl){
+  split={work:w*60,brk:b*60,label:lbl};
+  document.getElementById('overlay').style.display='none';
+  document.getElementById('shell').style.display='block';
+  document.getElementById('chipLabel').textContent=lbl+' — change';
+  initIdle(); renderStats();
+}
+function changeSplit(){
+  stopTimer(); flushAccum();
+  split=null; phase='idle'; round=0;
+  document.getElementById('overlay').style.display='flex';
+  document.getElementById('shell').style.display='none';
+}
+
+// ---- tabs ----
+function showTab(name){
+  document.getElementById('tab-timer').style.display=name==='timer'?'block':'none';
+  document.getElementById('tab-stats').style.display=name==='stats'?'block':'none';
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&name==='timer')||(i===1&&name==='stats')));
+  if(name==='stats') renderStats();
+}
+
+// ---- timer states ----
+function initIdle(){
+  phase='idle'; running=false;
+  remaining=split.work; elapsed=0; phaseDuration=split.work;
+  setRing(0,'var(--bdr2)');
+  setPill('idle','Idle');
+  el('tNum').textContent=fmt(split.work); el('tNum').style.color='var(--txt3)';
+  el('tRound').textContent='round '+(round+1);
+  setMainBtn('go','Start');
+  el('btnSkip').disabled=true; el('btnPrev').disabled=round===0;
+}
+function startSession(){
+  phase='session'; running=true;
+  remaining=split.work; elapsed=0; phaseDuration=split.work;
+  setPill('session','Session');
+  el('tNum').style.color='var(--g)';
+  el('tRound').textContent='round '+(round+1);
+  setMainBtn('pause','Pause');
+  el('btnSkip').disabled=false;
+  runTick(); notify('Session started','Stay focused. 🌿');
+}
+function startBreak(){
+  const k=dayKey(); const d=loadDay(k); d.rounds++; d.sessions++; saveDay(k,d);
+  phase='brk'; running=true; overtimeSec=0;
+  remaining=split.brk; elapsed=0; phaseDuration=split.brk;
+  setPill('brk','Break');
+  el('tNum').style.color='var(--amb)';
+  el('tRound').textContent='break · round '+(round+1);
+  setMainBtn('brk','Pause');
+  el('btnSkip').disabled=false;
+  runTick(); notify('Break time','Rest up. 🌙');
+}
+function startOvertime(){
+  phase='overtime'; running=true; overtimeSec=0;
+  remaining=0; elapsed=0; phaseDuration=1;
+  setPill('overtime','Overtime');
+  el('tNum').style.color='var(--red)';
+  setRing(1,'var(--red)');
+  setMainBtn('pause','Stop');
+  el('btnSkip').disabled=false;
+  runTick(); notify('Break ended','Start next session when ready. 🔥');
+}
+
+// ---- tick ----
+function runTick(){
+  clearInterval(tick);
+  tick=setInterval(()=>{
+    if(!running) return;
+    if(phase==='session'){
+      remaining--; elapsed++; accumStudy++;
+      if(accumStudy%30===0) flushAccum();
+      if(remaining<=0){ flushAccum(); clearInterval(tick); startBreak(); return; }
+    } else if(phase==='brk'){
+      remaining--; elapsed++; accumRest++;
+      if(accumRest%30===0) flushAccum();
+      if(remaining<=0){ flushAccum(); round++; startOvertime(); return; }
+    } else if(phase==='overtime'){
+      overtimeSec++; accumOT++; elapsed++;
+      if(accumOT%30===0) flushAccum();
+      el('tNum').textContent='+'+fmt(overtimeSec);
+      setRing(1,'var(--red)'); return;
+    }
+    updateRingDisplay();
+  },1000);
+}
+function updateRingDisplay(){
+  const p=elapsed/phaseDuration;
+  const c=phase==='brk'?'var(--amb)':'var(--g)';
+  setRing(p,c);
+  el('tNum').textContent=fmt(remaining);
+}
+
+// ---- controls ----
+function handleMain(){
+  if(phase==='idle'){ startSession(); return; }
+  if(running){
+    running=false; clearInterval(tick); flushAccum();
+    setMainBtn('go','Resume');
+  } else {
+    running=true;
+    const m=phase==='brk'||phase==='overtime'?'brk':'pause';
+    setMainBtn(m,'Pause'); runTick();
+  }
+}
+function skipPhase(){ stopTimer(); flushAccum(); if(phase==='session'){ round++; startBreak(); } else { startSession(); } }
+function prevRound(){ if(round<=0) return; stopTimer(); flushAccum(); round--; initIdle(); }
+function stopTimer(){ clearInterval(tick); running=false; }
+
+// ---- helpers ----
+function el(id){ return document.getElementById(id); }
+function fmt(sec){ sec=Math.max(0,sec); return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0'); }
+function fmtHM(sec){ const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60); return h+'h '+String(m).padStart(2,'0')+'m'; }
+function setRing(p,c){
+  const fg=el('ringFg'); fg.style.stroke=c;
+  fg.style.strokeDashoffset=CIRC*(1-p);
+}
+function setPill(cls,lbl){ const e=el('phasePill'); e.className='phase-pill '+cls; e.textContent=lbl; }
+function setMainBtn(style,lbl){ const b=el('mainBtn'); b.className='mbtn '+style; b.textContent=lbl; }
+
+function refreshTodayQuick(){
+  const d=loadDay(dayKey());
+  el('tsStudy').textContent=fmtHM(d.study);
+  el('tsRest').textContent=fmtHM(d.rest);
+  el('tsRounds').textContent=d.rounds;
+}
+
+// ---- STATS ----
+function setRange(r){
+  statsRange=r;
+  document.querySelectorAll('.rbtn').forEach((b,i)=>{
+    b.classList.toggle('active',(['day','week','month'])[i]===r);
+  });
+  renderStats();
+}
+
+function renderStats(){
+  refreshTodayQuick();
+  if(statsRange==='day') renderDay();
+  else if(statsRange==='week') renderWeek();
+  else renderMonth();
+  renderHeatmap();
+}
+
+function renderDay(){
+  const d=loadDay(dayKey());
+  el('statsCards').innerHTML=`
+    <div class="sc"><div class="sc-lbl">Study time</div><div class="sc-val g">${fmtHM(d.study)}</div><div class="sc-sub">${d.rounds} rounds completed</div></div>
+    <div class="sc"><div class="sc-lbl">Rest time</div><div class="sc-val a">${fmtHM(d.rest)}</div><div class="sc-sub">${Math.floor(d.overtime/60)}m overtime</div></div>
+    <div class="sc"><div class="sc-lbl">Sessions</div><div class="sc-val g">${d.sessions}</div><div class="sc-sub">today</div></div>
+    <div class="sc"><div class="sc-lbl">Focus ratio</div><div class="sc-val d">${d.study+d.rest>0?Math.round(d.study/(d.study+d.rest)*100)+'%':'—'}</div><div class="sc-sub">study vs total</div></div>`;
+  el('chartLbl').textContent='Today (hourly)';
+  // build 8 three-hour buckets
+  const area=el('chartArea'); area.innerHTML='';
+  const maxMin=Math.max(1,Math.floor(d.study/60));
+  const studyPer=Math.floor(d.study/60);
+  const restPer=Math.floor(d.rest/60);
+  // simple single column
+  const maxH=56;
+  const sc=document.createElement('div'); sc.className='bc'; sc.style.flex='none'; sc.style.width='40%';
+  if(studyPer>0){const b=document.createElement('div');b.className='b s';b.style.height=Math.max(2,Math.round((studyPer/Math.max(studyPer+restPer,1))*maxH))+'px';sc.appendChild(b);}
+  if(restPer>0){const b=document.createElement('div');b.className='b r';b.style.height=Math.max(2,Math.round((restPer/Math.max(studyPer+restPer,1))*maxH))+'px';sc.appendChild(b);}
+  const lbl=document.createElement('div'); lbl.className='bl today'; lbl.textContent='today'; sc.appendChild(lbl);
+  area.appendChild(sc);
+}
+
+function renderWeek(){
+  let ws=0,wr=0,wdays=0,wsess=0;
+  const bars=[];
+  for(let i=6;i>=0;i--){
+    const k=dayKey(i); const d=loadDay(k);
+    const date=new Date(); date.setDate(date.getDate()-i);
+    ws+=d.study; wr+=d.rest; wsess+=d.sessions;
+    if(d.study>0) wdays++;
+    bars.push({study:Math.floor(d.study/60),rest:Math.floor(d.rest/60),dow:date.getDay(),isToday:i===0});
+  }
+  el('statsCards').innerHTML=`
+    <div class="sc"><div class="sc-lbl">Study this week</div><div class="sc-val g">${fmtHM(ws)}</div><div class="sc-sub">${wdays} active days</div></div>
+    <div class="sc"><div class="sc-lbl">Rest this week</div><div class="sc-val a">${fmtHM(wr)}</div><div class="sc-sub">${wsess} sessions</div></div>
+    <div class="sc"><div class="sc-lbl">Daily average</div><div class="sc-val g">${fmtHM(wdays>0?Math.floor(ws/wdays):0)}</div><div class="sc-sub">on active days</div></div>
+    <div class="sc"><div class="sc-lbl">Focus ratio</div><div class="sc-val d">${ws+wr>0?Math.round(ws/(ws+wr)*100)+'%':'—'}</div><div class="sc-sub">study vs total</div></div>`;
+  el('chartLbl').textContent='This week (min)';
+  drawBars(bars, el('chartArea'), d=>DAYS_SHORT[d.dow].slice(0,2), d=>d.isToday);
+}
+
+function renderMonth(){
+  const now=new Date();
+  let ms=0,mr=0,mdays=0,msess=0;
+  const bars=[];
+  const daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  for(let i=daysInMonth-1;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-i);
+    if(d>now) continue;
+    const k=dateKey(d); const day=loadDay(k);
+    ms+=day.study; mr+=day.rest; msess+=day.sessions;
+    if(day.study>0) mdays++;
+    bars.push({study:Math.floor(day.study/60),rest:Math.floor(day.rest/60),dow:d.getDay(),isToday:i===0,date:d.getDate()});
+  }
+  el('statsCards').innerHTML=`
+    <div class="sc"><div class="sc-lbl">Study this month</div><div class="sc-val g">${fmtHM(ms)}</div><div class="sc-sub">${mdays} active days</div></div>
+    <div class="sc"><div class="sc-lbl">Rest this month</div><div class="sc-val a">${fmtHM(mr)}</div><div class="sc-sub">${msess} total sessions</div></div>
+    <div class="sc"><div class="sc-lbl">Daily average</div><div class="sc-val g">${fmtHM(mdays>0?Math.floor(ms/mdays):0)}</div><div class="sc-sub">on active days</div></div>
+    <div class="sc"><div class="sc-lbl">Focus ratio</div><div class="sc-val d">${ms+mr>0?Math.round(ms/(ms+mr)*100)+'%':'—'}</div><div class="sc-sub">study vs total</div></div>`;
+  el('chartLbl').textContent=MONTHS[now.getMonth()]+' (min)';
+  drawBars(bars, el('chartArea'), d=>d.date, d=>d.isToday, true);
+}
+
+function drawBars(data, area, lblFn, todayFn, dense=false){
+  area.innerHTML='';
+  const maxV=Math.max(1,...data.map(d=>d.study+d.rest));
+  const H=56;
+  data.forEach(d=>{
+    const col=document.createElement('div'); col.className='bc';
+    if(d.rest>0){const b=document.createElement('div');b.className='b r';b.style.height=Math.max(2,Math.round((d.rest/maxV)*H))+'px';col.appendChild(b);}
+    if(d.study>0){const b=document.createElement('div');b.className='b s';b.style.height=Math.max(2,Math.round((d.study/maxV)*H))+'px';col.appendChild(b);}
+    if(!d.study&&!d.rest){const b=document.createElement('div');b.className='b s';b.style.height='2px';b.style.opacity='0.15';col.appendChild(b);}
+    const lbl=document.createElement('div');
+    lbl.className='bl'+(todayFn(d)?' today':'');
+    lbl.textContent=dense&&data.length>14?(d.date%5===0?d.date:''):lblFn(d);
+    col.appendChild(lbl);
+    area.appendChild(col);
+  });
+}
+
+// ---- HEATMAP ----
+function shiftMonth(dir){ hmapMonthOffset+=dir; renderHeatmap(); }
+
+function renderHeatmap(){
+  const now=new Date();
+  const viewDate=new Date(now.getFullYear(),now.getMonth()+hmapMonthOffset,1);
+  const y=viewDate.getFullYear(), m=viewDate.getMonth();
+  el('hmapMonthTitle').textContent=MONTHS[m]+' '+y;
+
+  // DOW headers
+  const drow=el('dowRow'); drow.innerHTML='';
+  ['S','M','T','W','T','F','S'].forEach(d=>{
+    const c=document.createElement('div'); c.className='dow-lbl'; c.textContent=d; drow.appendChild(c);
+  });
+
+  const firstDow=new Date(y,m,1).getDay();
+  const daysInM=new Date(y,m+1,0).getDate();
+  const grid=el('hmapGrid'); grid.innerHTML='';
+  const tooltip=el('tooltip');
+
+  // empty cells before month start
+  for(let i=0;i<firstDow;i++){
+    const c=document.createElement('div'); c.className='hcell empty'; grid.appendChild(c);
+  }
+
+  for(let day=1;day<=daysInM;day++){
+    const date=new Date(y,m,day);
+    const k=dateKey(date); const d=loadDay(k);
+    const studyH=d.study/3600;
+    const isToday=date.toDateString()===now.toDateString();
+    const c=document.createElement('div');
+    c.className='hcell'+(isToday?' today-cell':'');
+    c.style.background=studyH<=0?'var(--bdr)':studyH<1?'#1A4A2E':studyH<3?'#196B3F':studyH<5?'#1D8F58':'#3DD68C';
+    c.title='';
+    c.addEventListener('mouseenter',e=>{
+      tooltip.textContent=date.toDateString()+' · '+fmtHM(d.study)+' study · '+fmtHM(d.rest)+' rest';
+      tooltip.classList.add('vis');
+    });
+    c.addEventListener('mousemove',e=>{
+      tooltip.style.left=(e.clientX+10)+'px'; tooltip.style.top=(e.clientY-30)+'px';
+    });
+    c.addEventListener('mouseleave',()=>tooltip.classList.remove('vis'));
+    grid.appendChild(c);
+  }
+}
+
+// ---- NOTIFY ----
+let ntimer=null;
+function notify(t,m){
+  el('notifT').textContent=t; el('notifM').textContent=m;
+  el('notif').classList.add('show');
+  clearTimeout(ntimer); ntimer=setTimeout(()=>el('notif').classList.remove('show'),3200);
+}
+
+// init stats range buttons properly
+function initRangeBtns(){
+  document.querySelectorAll('.rbtn').forEach((b,i)=>{
+    b.onclick=()=>setRange(['day','week','month'][i]);
+  });
+}
+initRangeBtns();
+refreshTodayQuick();
+</script>
+</body>
+</html>
